@@ -1,30 +1,37 @@
 import express from 'express';
 import {Book} from  '../models/bookModels.js';
-
+import zod from 'zod';
 const router = express.Router();
 
 //route to post in the database
+const addBookSchema = zod.object({
+    title: zod.string(),
+    author: zod.string(),
+    publishYear: zod.number().min(1000).max(2024)
+});
+
+const updateBookSchema = zod.object({
+    title: zod.string().optional(),
+    author: zod.string().optional(),
+    publishYear: zod.number().min(1000).max(2024).optional()
+});
+
 router.post('/', async(req, res) => {
     try {
-        if (
-            !req.body.title ||
-            !req.body.author ||
-            !req.body.publishYear
-        ) {return  res.status(400).send({message: 'Please provide all the info.'})};
-        const newBook = {
-            title: req.body.title,
-            author: req.body.author,
-            publishYear: req.body.publishYear
-        };
-        const book = await Book.create(newBook);
-        return res.status(201).send(book);
+        const {title, author, publishYear} = addBookSchema.parse(req.body);
+        const book = new Book({
+            title,
+            author,
+            publishYear
+        });
+        await book.save();
+        return res.status(201).send({message: 'Book added successfully'});
     } catch (error) {
-        console.log(error.message);
-        res.status(500).send({meassage: error.message});
+        console.log(error);
+        return res.status(500).send({message: error.message});
     }
 })
 
-//route to get all the books from database
 router.get('/',  async (req, res) => {
     try {
         const book = await Book.find({});
@@ -34,11 +41,11 @@ router.get('/',  async (req, res) => {
         })
     } catch (error) {
         console.log(error);
-        res.status(500).send({message: error.message});
+        return res.status(500).send({message: error.message});
     }
+    
 })
 
-//route  to get a book by id
 router.get('/:id',  async (req, res) => {
     try {
         const {id} = req.params;
@@ -47,31 +54,30 @@ router.get('/:id',  async (req, res) => {
         return res.status(200).json(book)
     } catch (error) {
         console.log(error);
-        res.status(500).send({message: error.message});
+        return res.status(500).send({message: error.message});
     }
 })
 
-//route to update a book
 router.put('/:id', async (req, res) => {
     try {
-        if(
-            !req.body.title ||
-            !req.body.author ||
-            !req.body.publishYear
-        ){ return  res.status(400).send({message: 'Please provide all the info.'})};
         const {id} = req.params;
-        const result = await Book.findByIdAndUpdate(id, req.body);
-        if(!result){
-        return res.status(404).json({message: 'Book not found'});
-    }
-        return res.status(200).send({message:  'Book updated successfully'});
+        const {title, author, publishYear} = updateBookSchema.parse(req.body);
+        const book = await Book.findById(id);
+        if(!book){
+            return res.status(404).json({message: "Book not found"});
+        }
+        if(title) book.title = title;
+        if(author) book.author = author;
+        if(publishYear) book.publishYear = publishYear;
+        await book.save();
 
-
+        return res.status(200).send({message: "Book updated successfully"});
     } catch (error) {
         console.log(error);
-        res.status(500).send({message: error.message});
+        return res.status(500).send({message: error.message});
     }
 })
+
 
 //route to delete a book
 router.delete('/:id', async (req, res) => {
@@ -85,7 +91,7 @@ router.delete('/:id', async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.status(500).send({message: error.message});
+        return res.status(500).send({message: error.message});
     }
 })
 
