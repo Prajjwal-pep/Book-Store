@@ -12,6 +12,7 @@ const Home = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showType, setShowType] = useState('table');
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -28,8 +29,8 @@ const Home = () => {
   }, []);
 
   return (
-    <div className='p-4'>
-      <div className='flex justify-center items-center gap-x-4'>
+    <div className={`p-4 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+      <div className='flex justify-center items-center gap-x-4 mb-4'>
         <button
           className='bg-sky-300 hover:bg-sky-600 px-4 py-1 rounded-lg'
           onClick={() => setShowType('table')}
@@ -38,6 +39,12 @@ const Home = () => {
           className='bg-sky-300 hover:bg-sky-600 px-4 py-1 rounded-lg'
           onClick={() => setShowType('card')}
         >Card</button>
+        <button
+          className={`px-4 py-1 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 hover:bg-gray-600'}`}
+          onClick={() => setDarkMode(!darkMode)}
+        >
+          {darkMode ? 'Light Mode' : 'Dark Mode'}
+        </button>
       </div>
       <div className="flex justify-between items-center">
         <h1 className="text-3xl my-8">Books List</h1>
